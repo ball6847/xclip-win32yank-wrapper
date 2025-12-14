@@ -40,6 +40,8 @@ This document outlines the implementation plan for the xclip shell wrapper that 
 - [x] Test special characters and Unicode support
 - [x] Test multi-line text handling
 - [x] Test tool fallback mechanisms
+- [x] Improve test readability with table-driven approach using pytest
+- [x] Create TESTING_GUIDE.md documentation
 
 #### 6. Pyperclip Compatibility
 - [x] Ensure full compatibility with pyperclip
@@ -152,6 +154,19 @@ This document outlines the implementation plan for the xclip shell wrapper that 
 
 ## Testing Strategy
 
+### Test Frameworks
+
+**Primary:** `pytest` with parameterization (recommended)
+- Table-driven testing approach
+- Better readability and maintainability
+- Excellent test reporting
+- Requires: `pip install pytest`
+
+**Alternative:** Original procedural approach
+- No external dependencies
+- Simple and straightforward
+- Good for quick testing
+
 ### Unit Tests
 - Test argument parsing
 - Test tool detection
@@ -171,6 +186,26 @@ This document outlines the implementation plan for the xclip shell wrapper that 
 - Test with pyperclip
 - Test with various Windows clipboard tools
 - Test with different Windows versions
+
+### Test Files
+
+**`test_pyperclip_compatibility.py`**
+- Table-driven testing with pytest parameterization
+- All test cases defined in `TEST_CASES` list
+- Easier to add new tests
+- Better reporting and organization
+- See `TESTING_GUIDE.md` for details
+
+### Running Tests
+
+```bash
+# Using pytest (recommended)
+pip install pytest pyperclip
+pytest test_pyperclip_compatibility.py -v
+
+# Using Python directly
+python test_pyperclip_compatibility.py
+```
 
 ## Deployment Plan
 

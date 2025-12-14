@@ -1,116 +1,72 @@
 #!/usr/bin/env python3
+"""
+Improved pyperclip compatibility test using pytest parameterization.
+This makes the test more readable and maintainable with table-driven approach.
+"""
 
 import subprocess
 import sys
 import os
+import pytest
 
-def test_pyperclip_compatibility():
-    """Test xclip wrapper compatibility with pyperclip"""
+
+# Test cases defined as a table (list of tuples)
+TEST_CASES = [
+    # (test_name, input_text, expected_text, should_contain_lines)
+    ("Basic copy/paste", "Test from pyperclip", "Test from pyperclip", None),
+    ("Unicode handling", "Unicode: 你好 🎉", "Unicode: 你好 🎉", None),
+    ("Special characters", "Special: @#$%^&*()", "Special: @#$%^&*()", None),
+    ("Empty clipboard", "", "", None),
+    ("Multi-line text", "Line 1\nLine 2\nLine 3", None, ["Line 1", "Line 2", "Line 3"]),
+]
+
+
+@pytest.fixture(scope="module")
+def setup_pyperclip():
+    """Setup pyperclip to use xclip"""
+    import pyperclip
+    pyperclip.set_clipboard('xclip')
+    yield
+
+
+@pytest.mark.parametrize("test_name,input_text,expected_text,should_contain_lines", TEST_CASES)
+def test_pyperclip_compatibility(setup_pyperclip, test_name, input_text, expected_text, should_contain_lines):
+    """Test xclip wrapper compatibility with pyperclip using parameterized tests"""
+    import pyperclip
     
-    print("Testing xclip wrapper with pyperclip compatibility...")
-    print("=" * 60)
+    print(f"\nTest: {test_name}")
     
-    # Test 1: Basic copy/paste
-    print("\nTest 1: Basic copy/paste")
     try:
-        # Set xclip as clipboard mechanism
-        import pyperclip
-        pyperclip.set_clipboard('xclip')
+        # Copy text
+        pyperclip.copy(input_text)
         
-        # Test copy and paste
-        test_text = "Test from pyperclip"
-        pyperclip.copy(test_text)
+        # Paste text
         result = pyperclip.paste()
         
         # Strip trailing newline for comparison (pyperclip adds it)
         result_stripped = result.rstrip('\n')
-        if result_stripped == test_text:
-            print("✓ PASS: Basic copy/paste works")
-        else:
-            print(f"✗ FAIL: Expected '{test_text}', got '{result}'")
-            return False
-            
-    except Exception as e:
-        print(f"✗ FAIL: Error in basic copy/paste: {e}")
-        return False
-    
-    # Test 2: Unicode handling
-    print("\nTest 2: Unicode handling")
-    try:
-        unicode_text = "Unicode: 你好 🎉"
-        pyperclip.copy(unicode_text)
-        result = pyperclip.paste()
         
-        # Strip trailing newline for comparison
-        result_stripped = result.rstrip('\n')
-        if result_stripped == unicode_text:
-            print("✓ PASS: Unicode handling works")
+        # Check result
+        if should_contain_lines:
+            # For multi-line tests, check if all lines are present
+            assert all(line in result for line in should_contain_lines), \
+                f"Expected all lines to be present in result: {result}"
+            print(f"✓ PASS: {test_name}")
         else:
-            print(f"✗ FAIL: Expected '{unicode_text}', got '{result}'")
-            return False
+            # For single-line tests, exact match
+            assert result_stripped == expected_text, \
+                f"Expected '{expected_text}', got '{result}'"
+            print(f"✓ PASS: {test_name}")
             
     except Exception as e:
-        print(f"✗ FAIL: Error in Unicode handling: {e}")
-        return False
+        print(f"✗ FAIL: {test_name} - Error: {e}")
+        raise
+
+
+def test_direct_xclip_calls():
+    """Test direct xclip calls (like pyperclip does)"""
+    print("\nTest: Direct xclip calls")
     
-    # Test 3: Multi-line text
-    print("\nTest 3: Multi-line text")
-    try:
-        multiline_text = "Line 1\nLine 2\nLine 3"
-        pyperclip.copy(multiline_text)
-        result = pyperclip.paste()
-        
-        # For multiline, check if it contains all lines (newline handling may vary)
-        if "Line 1" in result and "Line 2" in result and "Line 3" in result:
-            print("✓ PASS: Multi-line text works")
-        else:
-            print(f"✗ FAIL: Expected multiline text, got '{result}'")
-            return False
-            
-    except Exception as e:
-        print(f"✗ FAIL: Error in multi-line text: {e}")
-        return False
-    
-    # Test 4: Special characters
-    print("\nTest 4: Special characters")
-    try:
-        special_text = "Special: @#$%^&*()"
-        pyperclip.copy(special_text)
-        result = pyperclip.paste()
-        
-        # Strip trailing newline for comparison
-        result_stripped = result.rstrip('\n')
-        if result_stripped == special_text:
-            print("✓ PASS: Special characters work")
-        else:
-            print(f"✗ FAIL: Expected '{special_text}', got '{result}'")
-            return False
-            
-    except Exception as e:
-        print(f"✗ FAIL: Error in special characters: {e}")
-        return False
-    
-    # Test 5: Empty clipboard
-    print("\nTest 5: Empty clipboard")
-    try:
-        # Clear clipboard by copying empty string
-        pyperclip.copy("")
-        result = pyperclip.paste()
-        
-        # Strip whitespace for comparison
-        result_stripped = result.strip()
-        if result_stripped == "":
-            print("✓ PASS: Empty clipboard works")
-        else:
-            print(f"✗ FAIL: Expected empty string, got '{result}'")
-            return False
-            
-    except Exception as e:
-        print(f"✗ FAIL: Error in empty clipboard: {e}")
-        return False
-    
-    # Test 6: Direct xclip calls (like pyperclip does)
-    print("\nTest 6: Direct xclip calls")
     try:
         # Test copy with stdin
         proc = subprocess.Popen(['./xclip', '-selection', 'c'], 
@@ -124,19 +80,14 @@ def test_pyperclip_compatibility():
         stdout, stderr = proc.communicate()
         result = stdout.decode('utf-8').strip()
         
-        if result == "Direct stdin test":
-            print("✓ PASS: Direct xclip calls work")
-        else:
-            print(f"✗ FAIL: Expected 'Direct stdin test', got '{result}'")
-            return False
-            
+        assert result == "Direct stdin test", \
+            f"Expected 'Direct stdin test', got '{result}'"
+        print("✓ PASS: Direct xclip calls work")
+        
     except Exception as e:
-        print(f"✗ FAIL: Error in direct xclip calls: {e}")
-        return False
-    
-    print("\n" + "=" * 60)
-    print("All pyperclip compatibility tests passed!")
-    return True
+        print(f"✗ FAIL: Direct xclip calls - Error: {e}")
+        raise
+
 
 if __name__ == "__main__":
     # Check if pyperclip is installed
@@ -147,5 +98,5 @@ if __name__ == "__main__":
         print("Please install it with: pip install pyperclip")
         sys.exit(1)
     
-    success = test_pyperclip_compatibility()
-    sys.exit(0 if success else 1)
+    # Run tests with pytest
+    pytest.main([__file__, "-v"])

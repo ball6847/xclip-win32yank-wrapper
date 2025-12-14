@@ -136,6 +136,14 @@ xclip -version
 
 ## Testing
 
+### Test Files
+
+**`test_pyperclip_compatibility.py`**
+- Table-driven testing with pytest parameterization
+- Better readability and maintainability
+- All test cases defined in a single table
+- See [TESTING_GUIDE.md](TESTING_GUIDE.md) for details
+
 ### Run Basic Tests
 
 ```bash
@@ -146,11 +154,25 @@ xclip -version
 ### Test Pyperclip Compatibility
 
 ```bash
-# Install pyperclip if needed
-pip install pyperclip
+# Install dependencies
+pip install pytest pyperclip
 
-# Run pyperclip compatibility tests
-python3 test_pyperclip_compatibility.py
+# Run all tests with verbose output
+pytest test_pyperclip_compatibility.py -v
+
+# Run specific test
+pytest test_pyperclip_compatibility.py::test_direct_xclip_calls -v
+
+# Run with detailed output
+pytest test_pyperclip_compatibility.py -vv
+```
+
+### Compare Testing Approaches
+
+```bash
+# Run comparison script
+chmod +x compare_tests.sh
+./compare_tests.sh
 ```
 
 ## Error Handling
@@ -198,6 +220,8 @@ For issues and questions, please refer to the [AGENTS.md](AGENTS.md) file for AI
 - `xclip` - Main shell script wrapper
 - `test_xclip_wrapper.sh` - Comprehensive test suite
 - `test_pyperclip_compatibility.py` - Pyperclip compatibility tests
+- `compare_tests.sh` - Script to compare testing approaches
+- `TESTING_GUIDE.md` - Testing guide and best practices
 - `XCLIP_SHELL_WRAPPER_DESIGN.md` - Detailed design documentation
 - `PLAN.md` - Implementation plan and task tracking
 - `AGENTS.md` - AI agent guide
