@@ -8,38 +8,38 @@ This document outlines the implementation plan for the xclip shell wrapper that 
 ### High Priority (Core Functionality)
 
 #### 1. Argument Parser
-- [ ] Parse xclip-compatible command-line arguments
-- [ ] Support: `-i`/`--in`, `-o`/`--out`, `-selection`, `-t`, `-d`, `-version`, `-help`, `-quiet`
-- [ ] Validate arguments and provide helpful error messages
-- [ ] Support both positional and named arguments
+- [x] Parse xclip-compatible command-line arguments
+- [x] Support: `-i`/`--in`, `-o`/`--out`, `-selection`, `-t`, `-d`, `-version`, `-help`, `-quiet`
+- [x] Validate arguments and provide helpful error messages
+- [x] Support both positional and named arguments
 
 #### 2. Tool Detection and Selection
-- [ ] Detect available Windows clipboard tools
-- [ ] Prioritize win32yank.exe as primary tool
-- [ ] Fallback to win32yoink.exe if win32yank is not available
-- [ ] Provide consistent interface regardless of underlying tool
+- [x] Detect available Windows clipboard tools
+- [x] Prioritize win32yank.exe as primary tool
+- [x] Fallback to win32yoink.exe if win32yank is not available
+- [x] Provide consistent interface regardless of underlying tool
 
 #### 3. Selection Handler
-- [ ] Handle the `-selection` flag that Windows clipboard tools don't support
-- [ ] Map X11 selections to Windows clipboard
-- [ ] Provide fallback behavior for PRIMARY selection
-- [ ] Show warning when PRIMARY selection is mapped to CLIPBOARD
+- [x] Handle the `-selection` flag that Windows clipboard tools don't support
+- [x] Map X11 selections to Windows clipboard
+- [x] Provide fallback behavior for PRIMARY selection
+- [x] Show warning when PRIMARY selection is mapped to CLIPBOARD
 
 #### 4. Multi-Tool Integration Layer
-- [ ] Execute the appropriate Windows clipboard tool based on availability
-- [ ] Handle stdin/stdout redirection consistently across tools
-- [ ] Process return codes and errors
-- [ ] Provide fallback mechanisms between tools
-- [ ] Handle tool-specific error messages and help text
+- [x] Execute the appropriate Windows clipboard tool based on availability
+- [x] Handle stdin/stdout redirection consistently across tools
+- [x] Process return codes and errors
+- [x] Provide fallback mechanisms between tools
+- [x] Handle tool-specific error messages and help text
 
 #### 5. Testing
-- [ ] Create comprehensive test script to verify all functionality
-- [ ] Test basic copy/paste operations
-- [ ] Test selection flag handling
-- [ ] Test empty clipboard behavior
-- [ ] Test special characters and Unicode support
-- [ ] Test multi-line text handling
-- [ ] Test tool fallback mechanisms
+- [x] Create comprehensive test script to verify all functionality
+- [x] Test basic copy/paste operations
+- [x] Test selection flag handling
+- [x] Test empty clipboard behavior
+- [x] Test special characters and Unicode support
+- [x] Test multi-line text handling
+- [x] Test tool fallback mechanisms
 
 #### 6. Pyperclip Compatibility
 - [ ] Ensure full compatibility with pyperclip

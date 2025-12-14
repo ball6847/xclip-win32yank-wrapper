@@ -1,176 +1,105 @@
-# Xclip Shell Wrapper - AI Agent Guide
+# Xclip Shell Wrapper - Technical Reference
 
-## Project Overview
+## Technical Constraints
 
-This project provides a shell script wrapper that enables xclip compatibility for Windows clipboard utilities. The wrapper bridges the gap between Linux xclip expectations and Windows clipboard tools, specifically supporting `win32yank.exe` (primary) and `win32yoink.exe` (fallback).
+### Platform Requirements
+- **Primary Platform:** Windows (WSL - Windows Subsystem for Linux)
+- **Shell Environment:** Bash shell scripting
+- **Python Version:** Python 3.x (for testing and compatibility layer)
 
-**Key Problem Solved:** Windows clipboard utilities lack support for the `-selection` flag and other xclip features that pyperclip and other Linux tools expect. This wrapper provides 100% xclip compatibility on Windows/WSL environments.
+### Dependency Constraints
+- **Primary Clipboard Tool:** `win32yank.exe` (required for full functionality)
+- **Fallback Clipboard Tool:** `win32yoink.exe` (optional, used if win32yank.exe not available)
+- **Python Dependency:** `pyperclip==1.11.0` (for compatibility testing)
 
-## Project Structure
+### Implementation Constraints
+- **Shell Scripting Standards:**
+  - Must use `#!/bin/bash` shebang
+  - Must follow POSIX-compatible syntax where possible
+  - Must use `[[ ]]` for conditional expressions
+  - Must quote variables: `"$variable"`
+  - Must use `local` for function variables
+  - Error messages must go to stderr: `echo "Error" >&2`
+  - Exit codes: 0 for success, 1 for general errors
 
+- **Function Naming:**
+  - Must use `snake_case` for function names
+  - Helper functions must be prefixed with underscore: `_check_clipboard_empty()`
+
+- **Error Handling:**
+  - Must check command availability before use
+  - Must provide fallback mechanisms
+  - Must provide clear error messages with installation hints
+  - Must respect the `-quiet` flag for suppressing errors
+
+### Security Constraints
+- Must not execute user input as code
+- Must sanitize clipboard content (remove control characters if needed)
+- Must handle large clipboard content gracefully
+- Must not store or transmit credentials
+
+## Technical Implementation Details
+
+### Core Features
+- **xclip Compatibility:**
+  - Must support `-i`, `-o`, `-selection`, `-t`, `-d`, `-version`, `-help`, `-quiet`
+  - Must handle both short and long options (`-i`/`--in`)
+  - Must validate argument combinations
+
+- **Tool Detection:**
+  - Must prioritize: win32yank.exe → win32yoink.exe
+  - Must provide graceful fallback between tools
+  - Must provide clear error when no tools available
+
+- **Selection Handling:**
+  - Must map `CLIPBOARD` selection directly
+  - Must map `PRIMARY` selection with warning (Windows doesn't support it)
+  - Must default to `CLIPBOARD` selection
+
+- **Clipboard Operations:**
+  - Must handle stdin/stdout redirection
+  - Must process empty clipboard correctly
+  - Must remove trailing newlines and carriage returns
+  - Must detect and filter help text from tool output
+
+### Edge Cases
+- Empty clipboard must return empty string, not help text
+- Must handle special characters and Unicode (UTF-8)
+- Must support multi-line text
+- Must filter tool-specific error messages
+- Must handle permission denied scenarios
+
+## Development Setup
+
+### Virtual Environment
+```bash
+# Create virtual environment
+python3 -m venv venv
+
+# Activate
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
 ```
-xclip-win32yank-wrapper/
-├── XCLIP_SHELL_WRAPPER_DESIGN.md    # Comprehensive design document (24KB)
-├── AGENTS.md                       # This file - AI agent reference
-└── .git/                           # Git repository
+
+### Testing
+```bash
+# Shell wrapper tests
+chmod +x test_xclip_wrapper.sh
+./test_xclip_wrapper.sh
+
+# Pyperclip compatibility tests
+source venv/bin/activate
+python test_pyperclip_compatibility.py
 ```
-
-**Current Status:** Design phase completed, implementation pending
-
-## Technology Stack
-
-- **Language:** Bash shell scripting
-- **Target Platforms:** Windows, WSL (Windows Subsystem for Linux)
-- **Dependencies:** 
-  - Primary: `win32yank.exe`
-  - Fallback: `win32yoink.exe`
-- **Compatibility Layer:** xclip command-line interface
-
-## Architecture
-
-The wrapper consists of five main components:
-
-1. **Argument Parser** - Processes xclip-compatible command-line arguments
-2. **Tool Selection Layer** - Detects and prioritizes available clipboard tools
-3. **Selection Handler** - Maps X11 selections to Windows clipboard
-4. **Multi-Tool Integration** - Provides consistent interface across different tools
-5. **Additional Features** - Handles edge cases, empty clipboard, help text
-
-## Development Workflow
-
-### Project Tracking
-
-**IMPORTANT: Always follow this workflow:**
-
-1. **Read PLAN.md first** - Check the current state of all tasks
-2. **Create/update todo list** - Based on what needs to be done in PLAN.md
-3. **Implement tasks** - Work on the highest priority items
-4. **Update PLAN.md** - When a task is completed, mark it as done in PLAN.md
-5. **Update todo list** - Reflect the updated state from PLAN.md
-
-**PLAN.md is the source of truth** - Always update it when tasks are completed.
 
 ### Build Process
-
-This is a shell script project with no compilation required:
-
 ```bash
-# Make the script executable
+# Make executable
 chmod +x xclip
 
-# Place in PATH (no sudo required)
+# Install to PATH
 mkdir -p ~/.local/bin
 cp xclip ~/.local/bin/
 ```
-
-### Testing Strategy
-
-The project includes comprehensive test cases in the design document.
-
-## Code Style Guidelines
-
-### Shell Script Standards
-
-- Use `#!/bin/bash` shebang
-- Follow POSIX-compatible syntax where possible
-- Use `[[ ]]` for conditional expressions
-- Quote variables: `"$variable"`
-- Use `local` for function variables
-- Error messages to stderr: `echo "Error" >&2`
-- Exit codes: 0 for success, 1 for general errors
-
-### Function Naming
-
-- Use `snake_case` for function names
-- Descriptive names: `detect_clipboard_tool()`, `execute_clipboard_operation()`
-- Helper functions prefixed with underscore: `_check_clipboard_empty()`
-
-### Error Handling
-
-- Always check command availability before use
-- Provide fallback mechanisms
-- Clear error messages with installation hints
-- Respect the `-quiet` flag for suppressing errors
-
-## Implementation Requirements
-
-### Core Features
-
-1. **xclip Compatibility**
-   - Support `-i`, `-o`, `-selection`, `-t`, `-d`, `-version`, `-help`, `-quiet`
-   - Handle both short and long options (`-i`/`--in`)
-   - Validate argument combinations
-
-2. **Tool Detection**
-   - Prioritize: win32yank.exe → win32yoink.exe
-   - Graceful fallback between tools
-   - Clear error when no tools available
-
-3. **Selection Handling**
-   - Map `CLIPBOARD` selection directly
-   - Map `PRIMARY` selection with warning (Windows doesn't support it)
-   - Default to `CLIPBOARD` selection
-
-4. **Clipboard Operations**
-   - Handle stdin/stdout redirection
-   - Process empty clipboard correctly
-   - Remove trailing newlines and carriage returns
-   - Detect and filter help text from tool output
-
-### Edge Cases
-
-- Empty clipboard should return empty string, not help text
-- Handle special characters and Unicode (UTF-8)
-- Multi-line text support
-- Tool-specific error messages filtering
-- Permission denied scenarios
-
-## Security Considerations
-
-- No execution of user input as code
-- Sanitize clipboard content (remove control characters if needed)
-- Handle large clipboard content gracefully
-- No credential storage or transmission
-
-## Deployment
-
-### Installation Methods
-
-1. **Manual Installation**
-   ```bash
-   wget https://raw.githubusercontent.com/ball6847/xclip-win32yank-wrapper/main/xclip
-   chmod +x xclip
-   mkdir -p ~/.local/bin
-   mv xclip ~/.local/bin/
-   ```
-
-2. **Package Manager** (future)
-   - Consider Chocolatey for Windows
-   - Consider AUR for Arch Linux
-   - Consider Homebrew for macOS (if WSL support needed)
-
-### Dependencies Installation
-
-```bash
-# Install win32yank (primary recommendation)
-# Download from: https://github.com/equalsraf/win32yank
-
-# Alternative: Install win32yoink
-# Download from: https://github.com/equalsraf/win32yoink
-```
-
-## Contributing Guidelines
-
-1. Follow existing code style and patterns
-2. Add tests for new features
-3. Update documentation for changes
-4. Test on multiple Windows versions
-5. Verify pyperclip compatibility
-6. Consider backward compatibility
-
-## References
-
-- **Design Document:** `XCLIP_SHELL_WRAPPER_DESIGN.md` (comprehensive implementation guide)
-- **Pyperclip Integration:** https://github.com/asweigart/pyperclip
-- **Win32yank:** https://github.com/equalsraf/win32yank
-- **Win32yoink:** https://github.com/equalsraf/win32yoink

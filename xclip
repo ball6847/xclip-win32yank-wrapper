@@ -1,0 +1,223 @@
+#!/bin/bash
+
+# Xclip wrapper for Windows clipboard tools
+# Provides xclip compatibility on Windows/WSL
+# Supports win32yank.exe (primary) and win32yoink.exe (fallback)
+
+# Default values
+INPUT=false
+OUTPUT=false
+SELECTION="c"  # c = CLIPBOARD, p = PRIMARY
+TARGET="UTF8_STRING"
+QUIET=false
+
+# Show help function
+show_help() {
+    cat << 'EOF'
+Usage: xclip [OPTIONS]
+
+Options:
+  -i, --in              Read from stdin and copy to clipboard
+  -o, --out             Read from clipboard and output to stdout
+  -selection SEL        Specify selection (c=CLIPBOARD, p=PRIMARY)
+  -t, -target TARGET    Specify target type (default: UTF8_STRING)
+  -d, -display DISPLAY  Specify X display (ignored)
+  -version              Show version information
+  -help                 Show this help text
+  -quiet                 Suppress error messages
+
+Examples:
+  # Copy from stdin to clipboard
+  echo "Hello" | xclip -i
+
+  # Paste from clipboard to stdout
+  xclip -o
+
+  # Copy with specific selection
+  echo "Hello" | xclip -selection c -i
+
+  # Paste with specific selection
+  xclip -selection p -o
+EOF
+}
+
+# Tool detection and selection
+detect_clipboard_tool() {
+    # Try win32yank first (primary)
+    if command -v win32yank.exe >/dev/null 2>&1; then
+        echo "win32yank.exe"
+        return 0
+    fi
+    
+    # Fallback to win32yoink
+    if command -v win32yoink.exe >/dev/null 2>&1; then
+        echo "win32yoink.exe"
+        return 0
+    fi
+    
+    return 1
+}
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -i|--in)
+            INPUT=true
+            shift
+            ;;
+        -o|--out)
+            OUTPUT=true
+            shift
+            ;;
+        -selection)
+            if [[ "$2" == "c" || "$2" == "p" ]]; then
+                SELECTION="$2"
+            else
+                echo "Error: Invalid selection. Use 'c' for CLIPBOARD or 'p' for PRIMARY" >&2
+                exit 1
+            fi
+            shift 2
+            ;;
+        -t|-target)
+            TARGET="$2"
+            shift 2
+            ;;
+        -d|-display)
+            # Ignore display parameter (for compatibility)
+            shift 2
+            ;;
+        -version)
+            echo "xclip wrapper v2.0 (win32yank/win32yoink backend)"
+            exit 0
+            ;;
+        -help)
+            show_help
+            exit 0
+            ;;
+        -quiet)
+            QUIET=true
+            shift
+            ;;
+        *)
+            echo "Error: Unknown option $1" >&2
+            exit 1
+            ;;
+    esac
+done
+
+# Auto-detect mode if not specified
+# If stdin has content and no mode specified, assume -i
+# If -o is specified or no stdin, assume -o
+if [[ $INPUT == false && $OUTPUT == false ]]; then
+    # Check if stdin has content
+    if [[ -t 0 ]]; then
+        # stdin is a terminal and no mode specified - this is an error
+        echo "Error: Must specify either -i or -o" >&2
+        exit 1
+    else
+        # stdin has content, assume -i mode
+        INPUT=true
+    fi
+fi
+
+if [[ $INPUT == true && $OUTPUT == true ]]; then
+    echo "Error: Cannot specify both -i and -o" >&2
+    exit 1
+fi
+
+# Detect available clipboard tool
+CLIPBOARD_TOOL=$(detect_clipboard_tool)
+if [[ $? -ne 0 ]]; then
+    echo "Error: No compatible clipboard tool found (win32yank or win32yoink)" >&2
+    echo "Please install win32yank.exe or win32yoink.exe" >&2
+    echo "Installation options:" >&2
+    echo "  - win32yank: https://github.com/equalsraf/win32yank" >&2
+    echo "  - win32yoink: https://github.com/equalsraf/win32yoink" >&2
+    exit 1
+fi
+
+# Handle selection
+case "$SELECTION" in
+    "c")
+        # CLIPBOARD selection - use Windows clipboard
+        CLIPBOARD_TYPE="clipboard"
+        ;;
+    "p")
+        # PRIMARY selection - map to Windows clipboard
+        # Note: Windows doesn't have PRIMARY selection, so we use CLIPBOARD
+        if [[ $QUIET == false ]]; then
+            echo "Warning: PRIMARY selection not supported on Windows, using CLIPBOARD" >&2
+        fi
+        CLIPBOARD_TYPE="clipboard"
+        ;;
+    *)
+        echo "Error: Invalid selection type" >&2
+        exit 1
+        ;;
+esac
+
+# Execute clipboard operation with tool-specific handling
+execute_clipboard_operation() {
+    local tool="$1"
+    local operation="$2"  # "in" or "out"
+    
+    if [[ "$operation" == "in" ]]; then
+        # Copy to clipboard
+        if [[ "$tool" == "win32yank.exe" ]]; then
+            if ! win32yank.exe -i 2>/dev/null; then
+                return 1
+            fi
+        elif [[ "$tool" == "win32yoink.exe" ]]; then
+            if ! win32yoink.exe -i 2>/dev/null; then
+                return 1
+            fi
+        fi
+        
+    elif [[ "$operation" == "out" ]]; then
+        # Read from clipboard
+        local output=""
+        
+        if [[ "$tool" == "win32yank.exe" ]]; then
+            output=$(win32yank.exe -o 2>/dev/null || echo "")
+        elif [[ "$tool" == "win32yoink.exe" ]]; then
+            output=$(win32yoink.exe -o 2>/dev/null || echo "")
+        fi
+        
+        # Check if output is empty or contains tool help text
+        if [[ -z "$output" || "$output" == "Usage:"* || "$output" == "win32yank"* || "$output" == "win32yoink"* ]]; then
+            # Try fallback tools
+            if [[ "$tool" == "win32yank.exe" ]]; then
+                # Try win32yoink as fallback
+                if command -v win32yoink.exe >/dev/null 2>&1; then
+                    output=$(win32yoink.exe -o 2>/dev/null || echo "")
+                fi
+            fi
+        fi
+        
+        # Remove trailing newlines that some tools add
+        output=$(echo "$output" | sed 's/\r$//;s/\n$//')
+        
+        echo "$output"
+    fi
+}
+
+# Execute operation
+if [[ $INPUT == true ]]; then
+    # Copy to clipboard with fallback
+    if ! execute_clipboard_operation "$CLIPBOARD_TOOL" "in"; then
+        # Try fallback tools
+        if [[ "$CLIPBOARD_TOOL" == "win32yank.exe" ]] && command -v win32yoink.exe >/dev/null 2>&1; then
+            if execute_clipboard_operation "win32yoink.exe" "in"; then
+                exit 0
+            fi
+        fi
+        
+        if [[ $QUIET == false ]]; then
+            echo "Error: Failed to copy to clipboard with all available tools" >&2
+        fi
+        exit 1
+    fi
+elif [[ $OUTPUT == true ]]; then
+    # Read from clipboard with fallback
+    execute_clipboard_operation "$CLIPBOARD_TOOL" "out"
+fi

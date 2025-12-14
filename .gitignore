@@ -1,0 +1,182 @@
+# Python virtual environment
+venv/
+.env
+.venv
+ENV
+env
+venv.bak
+env3
+.env.local
+pypoetry.cache
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+dist/
+downloads/
+eggs/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.html
+.cover
+.psess
+.pytest_cache/
+coverage/
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+# Django debug toolbar
+__debug__/
+
+# Build artifacts
+*.o
+*.lo
+*.la
+*.al
+*.ncb
+*.sbr
+*.dll
+*.exe
+*.egginfo
+*.pyc
+*.pyo
+*.pyd
+*.dylib
+*.so
+*.a
+
+# Local settings
+.venv
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.prod.local
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+*.bak
+*.tmp
+*.orig
+*.rej
+*.min.js
+*.map
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows thumbnail cache files
+desktop.ini
+
+# macOS metadata
+._*
+.DS_Store
+
+# Windows jump lists
+recently-used.xbel
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# Log files
+*.log
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# Node.js dependencies
+node_modules/
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnail cache files
+._*
+.Trashes
+.TemporaryItems
+.TCSH
+
+# Office Temporary Files
+~$*
+*.tmp
+*.temp
+*.bak
+*.old
+
+# Windows Installer files
+*.msi
+*.cab
+*.msm
+*.msp
+
+# Windows shortcuts
+*.lnk
+
+# Windows system files
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+System Volume Information/
+
+# Temporary files from text editors
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# Vim swap files
+.*.swp
+.*.swo
+.*.swn
