@@ -123,36 +123,33 @@ xclip -version
 
 ## Command-Line Options
 
-| Option | Description | Example |
-|--------|-------------|---------|
-| `-i`, `--in` | Read from stdin and copy to clipboard | `echo "text" \| xclip -i` |
-| `-o`, `--out` | Read from clipboard and output to stdout | `xclip -o` |
-| `-selection SEL` | Specify selection (c=CLIPBOARD, p=PRIMARY) | `xclip -selection c -i` |
-| `-t`, `-target TARGET` | Specify target type (default: UTF8_STRING) | `xclip -t UTF8_STRING -i` |
-| `-d`, `-display DISPLAY` | Specify X display (ignored for compatibility) | `xclip -d :0 -i` |
-| `-version` | Show version information | `xclip -version` |
-| `-help` | Show help text | `xclip -help` |
-| `-quiet` | Suppress error messages | `xclip -quiet -i` |
+| Option                   | Description                                   | Example                   |
+| ------------------------ | --------------------------------------------- | ------------------------- |
+| `-i`, `--in`             | Read from stdin and copy to clipboard         | `echo "text" \| xclip -i` |
+| `-o`, `--out`            | Read from clipboard and output to stdout      | `xclip -o`                |
+| `-selection SEL`         | Specify selection (c=CLIPBOARD, p=PRIMARY)    | `xclip -selection c -i`   |
+| `-t`, `-target TARGET`   | Specify target type (default: UTF8_STRING)    | `xclip -t UTF8_STRING -i` |
+| `-d`, `-display DISPLAY` | Specify X display (ignored for compatibility) | `xclip -d :0 -i`          |
+| `-version`               | Show version information                      | `xclip -version`          |
+| `-help`                  | Show help text                                | `xclip -help`             |
+| `-quiet`                 | Suppress error messages                       | `xclip -quiet -i`         |
 
 ## Testing
 
-### Test Files
+### Test Files (in `tests/` directory)
 
 **`tests/test_pyperclip_compatibility.py`**
+
 - Table-driven testing with pytest parameterization
 - Tests pyperclip integration
 - All test cases defined in a single table
 
 **`tests/test_xclip_wrapper.py`**
+
 - Table-driven testing with pytest parameterization
 - Tests direct xclip wrapper functionality
 - All test cases defined in tables
 - Comprehensive error handling tests
-
-**`tests/mock_clipboard_tools.py`**
-- Mock implementations of win32yank.exe and win32yoink.exe
-- For testing on non-Windows platforms
-- Simulates clipboard functionality
 
 ### Run All Tests
 
@@ -175,11 +172,11 @@ pytest -vv
 
 ### Testing Limitations
 
-**Important**: This project requires Windows-specific clipboard tools (`win32yank.exe` or `win32yoink.exe`) that are only available on Windows/WSL systems. 
+**Important**: This project requires Windows-specific clipboard tools (`win32yank.exe` or `win32yoink.exe`) that are only available on Windows/WSL systems.
 
 - Tests will only work on Windows or WSL where the clipboard tools are installed
 - GitHub Actions cannot run these tests on Ubuntu runners
-- For testing on other platforms, use the mock tools in `tests/mock_clipboard_tools.py`
+- No mock tools are currently available for non-Windows testing
 
 See [AGENTS.md](AGENTS.md) for detailed testing strategies and workarounds.
 
@@ -258,23 +255,27 @@ pip install -r requirements.txt
 #### Test Files (in `tests/` directory)
 
 **`tests/test_pyperclip_compatibility.py`**
+
 - Table-driven testing with pytest parameterization
 - Tests pyperclip integration
 - All test cases defined in a single table
 
 **`tests/test_xclip_wrapper.py`**
+
 - Table-driven testing with pytest parameterization
 - Tests direct xclip wrapper functionality
 - All test cases defined in tables
 - Comprehensive error handling tests
 
 **`tests/test_comprehensive.py`**
+
 - Comprehensive test suite (converted from comprehensive_test.sh)
 - 8 parameterized clipboard operation tests
 - 3 parameterized error handling tests
 - Tests for long text, whitespace, and edge cases
 
 **`tests/test_simple.py`**
+
 - Simple test suite (converted from simple_test.sh)
 - 4 basic clipboard operation tests
 - 2 error handling tests
@@ -310,11 +311,21 @@ pytest -vv
 
 ## License
 
-This project is open source and available for use.
+This project is licensed under the **MIT License**.
+
+See [LICENSE](LICENSE) for the full license text.
 
 ## Support
 
 For issues and questions, please refer to the [AGENTS.md](AGENTS.md) file for AI agent guidance.
+
+### Version
+
+Current version: **2.0**
+
+### Maintenance
+
+This project is maintained by **ball6847**. For bug reports and feature requests, please open an issue on GitHub.
 
 ## Files
 
@@ -343,6 +354,7 @@ For issues and questions, please refer to the [AGENTS.md](AGENTS.md) file for AI
 ✅ Empty clipboard handling  
 ✅ Unicode and special character support  
 ✅ Multi-line text support  
-✅ Selection flag handling  
+✅ Selection flag handling
 
 All implementation tasks have been completed successfully!
+
