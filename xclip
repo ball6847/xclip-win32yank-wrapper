@@ -70,12 +70,19 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         -selection)
-            if [[ "$2" == "c" || "$2" == "p" ]]; then
-                SELECTION="$2"
-            else
-                echo "Error: Invalid selection. Use 'c' for CLIPBOARD or 'p' for PRIMARY" >&2
-                exit 1
-            fi
+            # Support both single-character and full names for compatibility
+            case "$2" in
+                c|clipboard|CLIPBOARD)
+                    SELECTION="c"
+                    ;;
+                p|primary|PRIMARY)
+                    SELECTION="p"
+                    ;;
+                *)
+                    echo "Error: Invalid selection. Use 'c' for CLIPBOARD or 'p' for PRIMARY" >&2
+                    exit 1
+                    ;;
+            esac
             shift 2
             ;;
         -t|-target)

@@ -138,7 +138,7 @@ def test_selection_handling(xclip_path):
     
     test_text = "Selection test"
     
-    # Test CLIPBOARD selection
+    # Test CLIPBOARD selection with single character
     proc = subprocess.Popen(
         [xclip_path, "-selection", "c", "-i"],
         stdin=subprocess.PIPE
@@ -155,7 +155,45 @@ def test_selection_handling(xclip_path):
     
     assert result == test_text, \
         f"Expected '{test_text}', got '{result}'"
-    print("✓ PASS: Selection handling works")
+    print("✓ PASS: Selection handling with single character works")
+    
+    # Test CLIPBOARD selection with full name (Neovim compatibility)
+    proc = subprocess.Popen(
+        [xclip_path, "-selection", "clipboard", "-i"],
+        stdin=subprocess.PIPE
+    )
+    proc.communicate(input=test_text.encode('utf-8'))
+    
+    # Read back
+    proc = subprocess.Popen(
+        [xclip_path, "-selection", "clipboard", "-o"],
+        stdout=subprocess.PIPE
+    )
+    stdout, _ = proc.communicate()
+    result = stdout.decode('utf-8').strip()
+    
+    assert result == test_text, \
+        f"Expected '{test_text}', got '{result}'"
+    print("✓ PASS: Selection handling with full name 'clipboard' works")
+    
+    # Test PRIMARY selection with uppercase (Neovim compatibility)
+    proc = subprocess.Popen(
+        [xclip_path, "-selection", "PRIMARY", "-i"],
+        stdin=subprocess.PIPE
+    )
+    proc.communicate(input=test_text.encode('utf-8'))
+    
+    # Read back
+    proc = subprocess.Popen(
+        [xclip_path, "-selection", "PRIMARY", "-o"],
+        stdout=subprocess.PIPE
+    )
+    stdout, _ = proc.communicate()
+    result = stdout.decode('utf-8').strip()
+    
+    assert result == test_text, \
+        f"Expected '{test_text}', got '{result}'"
+    print("✓ PASS: Selection handling with uppercase 'PRIMARY' works")
 
 
 def test_quiet_mode(xclip_path):
@@ -300,6 +338,57 @@ def test_help_functionality(xclip_path):
     assert len(help_output.strip()) > 100, \
         "Help output should be substantial"
     print("✓ PASS: Help output is substantial")
+
+
+def test_neovim_compatibility(xclip_path):
+    """Test Neovim compatibility with full selection names"""
+    print("\nTest: Neovim compatibility")
+    
+    # Check if xclip exists first
+    import os
+    if not os.path.exists(xclip_path):
+        print(f"⚠ SKIP: xclip wrapper not found at {xclip_path}")
+        pytest.skip(f"xclip wrapper not found at {xclip_path}")
+    
+    test_text = "Neovim test text"
+    
+    # Test the exact command Neovim uses: xclip -selection clipboard -i
+    proc = subprocess.Popen(
+        [xclip_path, "-selection", "clipboard", "-i"],
+        stdin=subprocess.PIPE
+    )
+    proc.communicate(input=test_text.encode('utf-8'))
+    
+    # Test reading with full name
+    proc = subprocess.Popen(
+        [xclip_path, "-selection", "clipboard", "-o"],
+        stdout=subprocess.PIPE
+    )
+    stdout, _ = proc.communicate()
+    result = stdout.decode('utf-8').strip()
+    
+    assert result == test_text, \
+        f"Expected '{test_text}', got '{result}'"
+    print("✓ PASS: Neovim clipboard selection works")
+    
+    # Test PRIMARY selection (Neovim also uses this)
+    proc = subprocess.Popen(
+        [xclip_path, "-selection", "primary", "-i"],
+        stdin=subprocess.PIPE
+    )
+    proc.communicate(input=test_text.encode('utf-8'))
+    
+    # Test reading with full name
+    proc = subprocess.Popen(
+        [xclip_path, "-selection", "primary", "-o"],
+        stdout=subprocess.PIPE
+    )
+    stdout, _ = proc.communicate()
+    result = stdout.decode('utf-8').strip()
+    
+    assert result == test_text, \
+        f"Expected '{test_text}', got '{result}'"
+    print("✓ PASS: Neovim primary selection works")
 
 
 def test_tool_detection():
