@@ -218,7 +218,10 @@ For CI/CD pipelines, add this to your workflow:
 
 ## Development Setup
 
-### Virtual Environment
+### Virtual Environment (REQUIRED)
+
+**IMPORTANT:** Always use a virtual environment to avoid system package conflicts.
+
 ```bash
 # Create virtual environment
 python3 -m venv venv
@@ -232,26 +235,23 @@ pip install -r requirements.txt
 
 ### Testing
 
-#### Shell Wrapper Tests
-```bash
-# Make test executable
-chmod +x test_xclip_wrapper.sh
-
-# Run tests
-./test_xclip_wrapper.sh
-```
-
-#### Pyperclip Compatibility Tests
+#### All Tests (Python-based)
 
 ```bash
-# Install pytest
-pip install pytest
+# Activate virtual environment first!
+source venv/bin/activate
 
-# Run tests with verbose output
-pytest test_pyperclip_compatibility.py -v
+# Run all tests with verbose output
+pytest -v
 
-# Run specific test
-pytest test_pyperclip_compatibility.py::test_direct_xclip_calls -v
+# Run specific test file
+pytest tests/test_pyperclip_compatibility.py -v
+
+# Run specific test function
+pytest tests/test_xclip_wrapper.py::test_clipboard_operations -v
+
+# Run with detailed output
+pytest -vv
 ```
 
 ### Build Process

@@ -140,39 +140,32 @@ xclip -version
 
 **`test_pyperclip_compatibility.py`**
 - Table-driven testing with pytest parameterization
-- Better readability and maintainability
+- Tests pyperclip integration
 - All test cases defined in a single table
-- See [TESTING_GUIDE.md](TESTING_GUIDE.md) for details
 
-### Run Basic Tests
+**`test_xclip_wrapper.py`**
+- Table-driven testing with pytest parameterization
+- Tests direct xclip wrapper functionality
+- All test cases defined in tables
+- Comprehensive error handling tests
 
-```bash
-# Test the wrapper functionality
-./test_xclip_wrapper.sh
-```
-
-### Test Pyperclip Compatibility
+### Run All Tests
 
 ```bash
 # Install dependencies
 pip install pytest pyperclip
 
 # Run all tests with verbose output
+pytest -v
+
+# Run specific test file
 pytest test_pyperclip_compatibility.py -v
 
-# Run specific test
-pytest test_pyperclip_compatibility.py::test_direct_xclip_calls -v
+# Run specific test function
+pytest test_xclip_wrapper.py::test_clipboard_operations -v
 
 # Run with detailed output
-pytest test_pyperclip_compatibility.py -vv
-```
-
-### Compare Testing Approaches
-
-```bash
-# Run comparison script
-chmod +x compare_tests.sh
-./compare_tests.sh
+pytest -vv
 ```
 
 ## Error Handling
@@ -198,6 +191,69 @@ Installation options:
 
 See [XCLIP_SHELL_WRAPPER_DESIGN.md](XCLIP_SHELL_WRAPPER_DESIGN.md) for comprehensive design documentation.
 
+## Development Setup
+
+### Virtual Environment (REQUIRED)
+
+**IMPORTANT:** Always use a virtual environment to avoid system package conflicts.
+
+```bash
+# Create virtual environment
+python3 -m venv venv
+
+# Activate
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Testing
+
+#### Test Files (in `tests/` directory)
+
+**`tests/test_pyperclip_compatibility.py`**
+- Table-driven testing with pytest parameterization
+- Tests pyperclip integration
+- All test cases defined in a single table
+
+**`tests/test_xclip_wrapper.py`**
+- Table-driven testing with pytest parameterization
+- Tests direct xclip wrapper functionality
+- All test cases defined in tables
+- Comprehensive error handling tests
+
+**`tests/test_comprehensive.py`**
+- Comprehensive test suite (converted from comprehensive_test.sh)
+- 8 parameterized clipboard operation tests
+- 3 parameterized error handling tests
+- Tests for long text, whitespace, and edge cases
+
+**`tests/test_simple.py`**
+- Simple test suite (converted from simple_test.sh)
+- 4 basic clipboard operation tests
+- 2 error handling tests
+- Quick validation of core functionality
+
+#### Run All Tests
+
+```bash
+# Activate virtual environment first!
+source venv/bin/activate
+
+# Run all tests with verbose output
+pytest -v
+
+# Run specific test file
+pytest tests/test_pyperclip_compatibility.py -v
+
+# Run specific test function
+pytest tests/test_xclip_wrapper.py::test_clipboard_operations -v
+
+# Run with detailed output
+pytest -vv
+```
+
 ## Contributing
 
 1. Follow existing code style and patterns
@@ -218,10 +274,11 @@ For issues and questions, please refer to the [AGENTS.md](AGENTS.md) file for AI
 ## Files
 
 - `xclip` - Main shell script wrapper
-- `test_xclip_wrapper.sh` - Comprehensive test suite
-- `test_pyperclip_compatibility.py` - Pyperclip compatibility tests
-- `compare_tests.sh` - Script to compare testing approaches
-- `TESTING_GUIDE.md` - Testing guide and best practices
+- `tests/` - Directory containing all test files
+  - `test_xclip_wrapper.py` - Comprehensive test suite (pytest)
+  - `test_pyperclip_compatibility.py` - Pyperclip compatibility tests (pytest)
+  - `test_comprehensive.py` - Comprehensive test suite (pytest)
+  - `test_simple.py` - Simple test suite (pytest)
 - `XCLIP_SHELL_WRAPPER_DESIGN.md` - Detailed design documentation
 - `PLAN.md` - Implementation plan and task tracking
 - `AGENTS.md` - AI agent guide
