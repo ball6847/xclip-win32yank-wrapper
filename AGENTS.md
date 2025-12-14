@@ -218,9 +218,39 @@ For CI/CD pipelines, add this to your workflow:
 
 ## Development Setup
 
-### Virtual Environment (REQUIRED)
+### Using Makefile (Recommended)
 
-**IMPORTANT:** Always use a virtual environment to avoid system package conflicts.
+The project includes a Makefile to simplify common tasks:
+
+```bash
+# Show help
+make help
+
+# Setup virtual environment and install dependencies
+make setup
+
+# Run all tests
+make test
+
+# Run quick validation tests only
+make test-quick
+
+# Run comprehensive tests
+make test-comprehensive
+
+# Run pyperclip compatibility tests
+make test-pyperclip
+
+# Run xclip wrapper tests
+make test-wrapper
+
+# Clean up test cache
+make clean
+```
+
+### Manual Setup
+
+If you prefer not to use the Makefile, you can set up manually:
 
 ```bash
 # Create virtual environment

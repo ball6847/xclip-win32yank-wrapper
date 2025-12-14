@@ -193,9 +193,39 @@ See [XCLIP_SHELL_WRAPPER_DESIGN.md](XCLIP_SHELL_WRAPPER_DESIGN.md) for comprehen
 
 ## Development Setup
 
-### Virtual Environment (REQUIRED)
+### Using Makefile (Recommended)
 
-**IMPORTANT:** Always use a virtual environment to avoid system package conflicts.
+The project includes a Makefile to simplify common tasks:
+
+```bash
+# Show help
+make help
+
+# Setup virtual environment and install dependencies
+make setup
+
+# Run all tests
+make test
+
+# Run quick validation tests only
+make test-quick
+
+# Run comprehensive tests
+make test-comprehensive
+
+# Run pyperclip compatibility tests
+make test-pyperclip
+
+# Run xclip wrapper tests
+make test-wrapper
+
+# Clean up test cache
+make clean
+```
+
+### Manual Setup
+
+If you prefer not to use the Makefile, you can set up manually:
 
 ```bash
 # Create virtual environment
@@ -274,11 +304,13 @@ For issues and questions, please refer to the [AGENTS.md](AGENTS.md) file for AI
 ## Files
 
 - `xclip` - Main shell script wrapper
+- `Makefile` - Build automation and testing commands
 - `tests/` - Directory containing all test files
   - `test_xclip_wrapper.py` - Comprehensive test suite (pytest)
   - `test_pyperclip_compatibility.py` - Pyperclip compatibility tests (pytest)
   - `test_comprehensive.py` - Comprehensive test suite (pytest)
   - `test_simple.py` - Simple test suite (pytest)
+- `requirements.txt` - Python dependencies
 - `XCLIP_SHELL_WRAPPER_DESIGN.md` - Detailed design documentation
 - `PLAN.md` - Implementation plan and task tracking
 - `AGENTS.md` - AI agent guide
