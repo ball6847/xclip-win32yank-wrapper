@@ -389,6 +389,25 @@ def test_neovim_compatibility(xclip_path):
     assert result == test_text, \
         f"Expected '{test_text}', got '{result}'"
     print("✓ PASS: Neovim primary selection works")
+    
+    # Test -selection=value format (alternative syntax)
+    proc = subprocess.Popen(
+        [xclip_path, "-selection=clipboard", "-i"],
+        stdin=subprocess.PIPE
+    )
+    proc.communicate(input=test_text.encode('utf-8'))
+    
+    # Test reading with = format
+    proc = subprocess.Popen(
+        [xclip_path, "-selection=clipboard", "-o"],
+        stdout=subprocess.PIPE
+    )
+    stdout, _ = proc.communicate()
+    result = stdout.decode('utf-8').strip()
+    
+    assert result == test_text, \
+        f"Expected '{test_text}', got '{result}'"
+    print("✓ PASS: -selection=value format works")
 
 
 def test_tool_detection():

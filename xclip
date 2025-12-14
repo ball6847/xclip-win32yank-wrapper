@@ -69,9 +69,31 @@ while [[ $# -gt 0 ]]; do
             OUTPUT=true
             shift
             ;;
-        -selection)
+        -selection*|--selection*)
             # Support both single-character and full names for compatibility
-            case "$2" in
+            # Handle both -selection value and -selection=value formats
+            if [[ "$1" == *-selection=* ]]; then
+                # Format: -selection=value or --selection=value
+                selection_value="${1#*-selection=}"
+            elif [[ "$1" == --selection ]]; then
+                # Format: --selection value
+                if [[ -n "$2" && "$2" != -* ]]; then
+                    selection_value="$2"
+                    shift
+                else
+                    echo "Error: Invalid selection. Use 'c' for CLIPBOARD or 'p' for PRIMARY" >&2
+                    exit 1
+                fi
+            elif [[ -n "$2" && "$2" != -* ]]; then
+                # Format: -selection value
+                selection_value="$2"
+                shift
+            else
+                echo "Error: Invalid selection. Use 'c' for CLIPBOARD or 'p' for PRIMARY" >&2
+                exit 1
+            fi
+            
+            case "$selection_value" in
                 c|clipboard|CLIPBOARD)
                     SELECTION="c"
                     ;;
@@ -83,7 +105,7 @@ while [[ $# -gt 0 ]]; do
                     exit 1
                     ;;
             esac
-            shift 2
+            shift
             ;;
         -t|-target)
             TARGET="$2"
