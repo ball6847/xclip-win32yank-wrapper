@@ -207,13 +207,17 @@ If a test fails:
 
 ### Continuous Integration
 
-For CI/CD pipelines, add this to your workflow:
+The project includes a GitHub Actions workflow that automatically runs tests on every push and pull request to the main branch. The workflow tests against multiple Python versions (3.8-3.12) to ensure compatibility.
+
+**Workflow File:** `.github/workflows/test.yml`
+
+For CI/CD pipelines, you can use the same approach:
 
 ```yaml
 - name: Run tests
   run: |
     pip install pytest pyperclip
-    pytest test_pyperclip_compatibility.py -v
+    pytest tests/ -v
 ```
 
 ## Development Setup

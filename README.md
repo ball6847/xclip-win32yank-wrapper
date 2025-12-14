@@ -136,14 +136,18 @@ xclip -version
 
 ## Testing
 
+### Continuous Integration
+
+Tests are automatically run on every push and pull request to the main branch using GitHub Actions. The workflow tests against multiple Python versions (3.8-3.12) to ensure compatibility.
+
 ### Test Files
 
-**`test_pyperclip_compatibility.py`**
+**`tests/test_pyperclip_compatibility.py`**
 - Table-driven testing with pytest parameterization
 - Tests pyperclip integration
 - All test cases defined in a single table
 
-**`test_xclip_wrapper.py`**
+**`tests/test_xclip_wrapper.py`**
 - Table-driven testing with pytest parameterization
 - Tests direct xclip wrapper functionality
 - All test cases defined in tables
@@ -159,10 +163,10 @@ pip install pytest pyperclip
 pytest -v
 
 # Run specific test file
-pytest test_pyperclip_compatibility.py -v
+pytest tests/test_pyperclip_compatibility.py -v
 
 # Run specific test function
-pytest test_xclip_wrapper.py::test_clipboard_operations -v
+pytest tests/test_xclip_wrapper.py::test_clipboard_operations -v
 
 # Run with detailed output
 pytest -vv
