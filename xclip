@@ -109,15 +109,9 @@ done
 # If stdin has content and no mode specified, assume -i
 # If -o is specified or no stdin, assume -o
 if [[ $INPUT == false && $OUTPUT == false ]]; then
-    # Check if stdin has content
-    if [[ -t 0 ]]; then
-        # stdin is a terminal and no mode specified - this is an error
-        echo "Error: Must specify either -i or -o" >&2
-        exit 1
-    else
-        # stdin has content, assume -i mode
-        INPUT=true
-    fi
+    # No mode specified - this is an error
+    echo "Error: Must specify either -i or -o" >&2
+    exit 1
 fi
 
 if [[ $INPUT == true && $OUTPUT == true ]]; then
@@ -195,9 +189,9 @@ execute_clipboard_operation() {
         fi
         
         # Remove trailing newlines that some tools add
-        output=$(echo "$output" | sed 's/\r$//;s/\n$//')
+        output=$(printf "%s" "$output" | sed 's/\r$//;s/\n$//')
         
-        echo "$output"
+        printf "%s" "$output"
     fi
 }
 

@@ -72,7 +72,7 @@ def test_comprehensive_operations(xclip_path, test_name, input_text, expected_te
             stderr=subprocess.PIPE
         )
         stdout, stderr = proc.communicate()
-        result = stdout.decode('utf-8').strip()
+        result = stdout.decode('utf-8')
         
         # Check result
         if check_type == "exact":

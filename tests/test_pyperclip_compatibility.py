@@ -68,13 +68,24 @@ def test_direct_xclip_calls():
     print("\nTest: Direct xclip calls")
     
     try:
+        # Get the path to xclip wrapper
+        xclip_path = os.path.join(os.path.dirname(__file__), '../xclip')
+        if not os.path.exists(xclip_path):
+            print(f"⚠ SKIP: xclip wrapper not found at {xclip_path}")
+            pytest.skip(f"xclip wrapper not found at {xclip_path}")
+        
+        # Clear clipboard first
+        proc = subprocess.Popen([xclip_path, '-i'], 
+                              stdin=subprocess.PIPE)
+        proc.communicate(input=b"")
+        
         # Test copy with stdin
-        proc = subprocess.Popen(['./xclip', '-selection', 'c'], 
+        proc = subprocess.Popen([xclip_path, '-selection', 'c', '-i'], 
                               stdin=subprocess.PIPE)
         proc.communicate(input=b"Direct stdin test")
         
         # Test paste
-        proc = subprocess.Popen(['./xclip', '-selection', 'c', '-o'],
+        proc = subprocess.Popen([xclip_path, '-selection', 'c', '-o'],
                               stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE)
         stdout, stderr = proc.communicate()
