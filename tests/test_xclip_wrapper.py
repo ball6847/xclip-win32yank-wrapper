@@ -193,19 +193,19 @@ def test_help_and_version(xclip_path):
         print(f"⚠ SKIP: xclip wrapper not found at {xclip_path}")
         pytest.skip(f"xclip wrapper not found at {xclip_path}")
     
-    # Test help
+    # Test help with -help flag
     proc = subprocess.Popen(
         [xclip_path, "-help"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
-    stdout, stderr = proc.communicate()
+    help_stdout, help_stderr = proc.communicate()
     
     # Help should produce output (either stdout or stderr)
-    assert (stdout.decode('utf-8').strip() != "" or 
-            stderr.decode('utf-8').strip() != ""), \
+    assert (help_stdout.decode('utf-8').strip() != "" or 
+            help_stderr.decode('utf-8').strip() != ""), \
         "Expected help output"
-    print("✓ PASS: Help text displayed")
+    print("✓ PASS: Help text displayed with -help flag")
     
     # Test version
     proc = subprocess.Popen(
@@ -220,6 +220,86 @@ def test_help_and_version(xclip_path):
     assert "xclip wrapper" in output.lower(), \
         f"Expected version information, got: {output}"
     print("✓ PASS: Version information displayed")
+    
+    # Test that help contains expected content
+    help_output = help_stdout.decode('utf-8') + help_stderr.decode('utf-8')
+    expected_help_elements = [
+        "Usage:",
+        "Options:",
+        "-i, --in",
+        "-o, --out",
+        "-selection",
+        "-version",
+        "-help",
+        "Examples:"
+    ]
+    
+    for element in expected_help_elements:
+        assert element in help_output, \
+            f"Expected help text to contain '{element}'"
+    
+    print("✓ PASS: Help text contains all expected elements")
+
+
+def test_help_functionality(xclip_path):
+    """Test help functionality with various flags and options"""
+    print("\nTest: Comprehensive help functionality")
+    
+    # Check if xclip exists first
+    import os
+    if not os.path.exists(xclip_path):
+        print(f"⚠ SKIP: xclip wrapper not found at {xclip_path}")
+        pytest.skip(f"xclip wrapper not found at {xclip_path}")
+    
+    # Test 1: -help flag should exit with code 0
+    proc = subprocess.Popen(
+        [xclip_path, "-help"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    _, _ = proc.communicate()
+    assert proc.returncode == 0, "Help flag should exit with code 0"
+    print("✓ PASS: -help exits with success code")
+    
+    # Test 2: Help output should be comprehensive
+    proc = subprocess.Popen(
+        [xclip_path, "-help"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    stdout, stderr = proc.communicate()
+    help_output = stdout.decode('utf-8') + stderr.decode('utf-8')
+    
+    # Check for essential help content
+    essential_elements = [
+        "Usage:",
+        "Options:",
+        "-i, --in",
+        "-o, --out",
+        "-selection",
+        "-t, -target",
+        "-version",
+        "-help",
+        "-quiet",
+        "Examples:",
+        "Copy from stdin to clipboard",
+        "Paste from clipboard to stdout"
+    ]
+    
+    for element in essential_elements:
+        assert element in help_output, \
+            f"Help text should contain '{element}'"
+    print("✓ PASS: Help text contains all essential elements")
+    
+    # Test 3: Help should not produce errors
+    assert "Error:" not in help_output, \
+        "Help output should not contain error messages"
+    print("✓ PASS: Help output is clean (no errors)")
+    
+    # Test 4: Help output should be non-empty
+    assert len(help_output.strip()) > 100, \
+        "Help output should be substantial"
+    print("✓ PASS: Help output is substantial")
 
 
 def test_tool_detection():
