@@ -2,30 +2,33 @@
 
 ## Overview
 
-This document outlines the design for a shell script wrapper that provides xclip compatibility for `win32yoink.exe`. The wrapper will:
+This document outlines the design for a shell script wrapper that provides xclip compatibility for Windows clipboard utilities. The wrapper will support both `win32yank.exe` (primary) and `win32yoink.exe` (fallback) with the following features:
 
-1. Process the `-selection` flag that win32yoink doesn't support
-2. Pass through `-i` and `-o` flags to win32yoink
+1. Process the `-selection` flag that Windows clipboard tools don't support
+2. Pass through `-i` and `-o` flags to the appropriate Windows clipboard tool
 3. Add additional features needed by pyperclip
 4. Handle edge cases and error conditions
+5. Provide fallback mechanisms between different Windows clipboard utilities
 
 ## Problem Statement
 
-`win32yoink.exe` is a Windows clipboard utility that provides basic clipboard functionality but lacks:
+Windows clipboard utilities (`win32yank.exe` and `win32yoink.exe`) provide basic clipboard functionality but lack:
 
 - Support for the `-selection` flag (CLIPBOARD/PRIMARY selection)
 - Proper handling of empty clipboard
 - Consistent behavior with standard xclip
+- Cross-tool compatibility
 
-Pyperclip expects standard xclip behavior, which includes these features.
+Pyperclip expects standard xclip behavior, which includes these features. This wrapper provides a unified interface that works with multiple Windows clipboard tools.
 
 ## Design Goals
 
 1. **100% xclip compatibility** - Support all xclip command-line options used by pyperclip
 2. **Minimal overhead** - Fast execution with minimal shell overhead
 3. **Robust error handling** - Clear error messages for debugging
-4. **Backward compatibility** - Work with existing win32yoink installations
-5. **Easy deployment** - Simple shell script that can be dropped in place
+4. **Multi-tool support** - Work with both win32yank (primary) and win32yoink (fallback)
+5. **Backward compatibility** - Maintain compatibility with existing installations
+6. **Easy deployment** - Simple shell script that can be dropped in place
 
 ## Architecture
 
@@ -34,9 +37,17 @@ Pyperclip expects standard xclip behavior, which includes these features.
 │                 Xclip Shell Wrapper                        │
 │                                                             │
 │  ┌─────────────┐    ┌─────────────────┐    ┌─────────────┐  │
-│  │  Arg Parser  │───▶│  Selection      │───▶│  win32yoink  │  │
-│  │  (xclip args)│   │  Handler        │   │  (Windows)   │  │
+│  │  Arg Parser  │───▶│  Selection      │───▶│  Tool       │  │
+│  │  (xclip args)│   │  Handler        │   │  Selector   │  │
 │  └─────────────┘    └─────────────────┘    └─────────────┘  │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐  │
+│  │                 Windows Clipboard Tools              │  │
+│  │  ┌─────────────┐    ┌─────────────┐                    │  │
+│  │  │ win32yank   │    │ win32yoink  │                    │  │
+│  │  │ (primary)   │    │ (fallback)  │                    │  │
+│  │  └─────────────┘    └─────────────┘                    │  │
+│  └─────────────────────────────────────────────────────┘  │
 │                                                             │
 │  ┌─────────────────────────────────────────────────────┐  │
 │  │                 Additional Features                  │  │
@@ -71,82 +82,52 @@ Pyperclip expects standard xclip behavior, which includes these features.
 - `-help`: Show help text
 - `-quiet`: Suppress error messages
 
+### 2. Tool Selection Layer
+
+**Responsibilities:**
+
+- Detect available Windows clipboard tools
+- Prioritize win32yank.exe as primary tool
+- Fallback to win32yoink.exe if win32yank is not available
+- Provide consistent interface regardless of underlying tool
+
 **Implementation:**
 
 ```bash
-#!/bin/bash
+# Tool detection and selection
+detect_clipboard_tool() {
+    # Try win32yank first (primary)
+    if command -v win32yank.exe >/dev/null 2>&1; then
+        echo "win32yank.exe"
+        return 0
+    fi
+    
+    # Fallback to win32yoink
+    if command -v win32yoink.exe >/dev/null 2>&1; then
+        echo "win32yoink.exe"
+        return 0
+    fi
+    
+    return 1
+}
+```
 
-# Default values
-INPUT=false
-OUTPUT=false
-SELECTION="c"  # c = CLIPBOARD, p = PRIMARY
-TARGET="UTF8_STRING"
-QUIET=false
+**Usage in main script:**
 
-# Parse arguments
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        -i|--in)
-            INPUT=true
-            shift
-            ;;
-        -o|--out)
-            OUTPUT=true
-            shift
-            ;;
-        -selection)
-            if [[ "$2" == "c" || "$2" == "p" ]]; then
-                SELECTION="$2"
-            else
-                echo "Error: Invalid selection. Use 'c' for CLIPBOARD or 'p' for PRIMARY" >&2
-                exit 1
-            fi
-            shift 2
-            ;;
-        -t|-target)
-            TARGET="$2"
-            shift 2
-            ;;
-        -d|-display)
-            # Ignore display parameter (for compatibility)
-            shift 2
-            ;;
-        -version)
-            echo "xclip wrapper v1.0 (win32yoink backend)"
-            exit 0
-            ;;
-        -help)
-            show_help
-            exit 0
-            ;;
-        -quiet)
-            QUIET=true
-            shift
-            ;;
-        *)
-            echo "Error: Unknown option $1" >&2
-            exit 1
-            ;;
-    esac
-done
-
-# Validate arguments
-if [[ $INPUT == false && $OUTPUT == false ]]; then
-    echo "Error: Must specify either -i or -o" >&2
-    exit 1
-fi
-
-if [[ $INPUT == true && $OUTPUT == true ]]; then
-    echo "Error: Cannot specify both -i and -o" >&2
+```bash
+# Detect available clipboard tool
+CLIPBOARD_TOOL=$(detect_clipboard_tool)
+if [[ $? -ne 0 ]]; then
+    echo "Error: No compatible clipboard tool found (win32yank or win32yoink)" >&2
     exit 1
 fi
 ```
 
-### 2. Selection Handler
+### 3. Selection Handler
 
 **Responsibilities:**
 
-- Handle the `-selection` flag that win32yoink doesn't support
+- Handle the `-selection` flag that Windows clipboard tools don't support
 - Map X11 selections to Windows clipboard
 - Provide fallback behavior for PRIMARY selection
 
@@ -174,48 +155,90 @@ case "$SELECTION" in
 esac
 ```
 
-### 3. win32yoink Integration
+### 4. Multi-Tool Integration Layer
 
 **Responsibilities:**
 
-- Execute win32yoink with appropriate arguments
-- Handle stdin/stdout redirection
+- Execute the appropriate Windows clipboard tool based on availability
+- Handle stdin/stdout redirection consistently across tools
 - Process return codes and errors
+- Provide fallback mechanisms between tools
 
 **Implementation:**
 
 ```bash
-# Execute win32yoink
+# Execute clipboard operation with tool-specific handling
+execute_clipboard_operation() {
+    local tool="$1"
+    local operation="$2"  # "in" or "out"
+    
+    if [[ "$operation" == "in" ]]; then
+        # Copy to clipboard
+        if [[ "$tool" == "win32yank.exe" ]]; then
+            if ! win32yank.exe -i 2>/dev/null; then
+                return 1
+            fi
+        elif [[ "$tool" == "win32yoink.exe" ]]; then
+            if ! win32yoink.exe -i 2>/dev/null; then
+                return 1
+            fi
+        fi
+        
+    elif [[ "$operation" == "out" ]]; then
+        # Read from clipboard
+        local output=""
+        
+        if [[ "$tool" == "win32yank.exe" ]]; then
+            output=$(win32yank.exe -o 2>/dev/null || echo "")
+        elif [[ "$tool" == "win32yoink.exe" ]]; then
+            output=$(win32yoink.exe -o 2>/dev/null || echo "")
+        fi
+        
+        # Check if output is empty or contains tool help text
+        if [[ -z "$output" || "$output" == "Usage:"* || "$output" == "win32yank"* || "$output" == "win32yoink"* ]]; then
+            # Try fallback tools
+            if [[ "$tool" == "win32yank.exe" ]]; then
+                # Try win32yoink as fallback
+                if command -v win32yoink.exe >/dev/null 2>&1; then
+                    output=$(win32yoink.exe -o 2>/dev/null || echo "")
+                fi
+            fi
+        fi
+        
+        # Remove trailing newlines that some tools add
+        output=$(echo "$output" | sed 's/\r$//;s/\n$//')
+        
+        echo "$output"
+    fi
+}
+
+# Execute operation
 if [[ $INPUT == true ]]; then
-    # Copy to clipboard
-    if ! win32yoink -i 2>/dev/null; then
+    # Copy to clipboard with fallback
+    if ! execute_clipboard_operation "$CLIPBOARD_TOOL" "in"; then
+        # Try fallback tools
+        if [[ "$CLIPBOARD_TOOL" == "win32yank.exe" && command -v win32yoink.exe >/dev/null 2>&1 ]]; then
+            if execute_clipboard_operation "win32yoink.exe" "in"; then
+                exit 0
+            fi
+        fi
+        
         if [[ $QUIET == false ]]; then
-            echo "Error: Failed to copy to clipboard" >&2
+            echo "Error: Failed to copy to clipboard with all available tools" >&2
         fi
         exit 1
     fi
 elif [[ $OUTPUT == true ]]; then
-    # Read from clipboard
-    OUTPUT=$(win32yoink -o 2>/dev/null)
-
-    # Check if output is empty or contains win32yoink help text
-    if [[ -z "$OUTPUT" || "$OUTPUT" == "Usage:"* ]]; then
-        # Try to get from Windows clipboard using alternative method
-        OUTPUT=$(powershell -command "Get-Clipboard" 2>/dev/null || echo "")
-    fi
-
-    # Remove trailing newline that win32yoink adds
-    OUTPUT=$(echo "$OUTPUT" | sed 's/\r$//;s/\n$//')
-
-    echo "$OUTPUT"
+    # Read from clipboard with fallback
+    execute_clipboard_operation "$CLIPBOARD_TOOL" "out"
 fi
 ```
 
-### 4. Additional Features
+### 5. Additional Features
 
 #### Empty Clipboard Handling
 
-**Problem:** When the clipboard is empty, win32yoink outputs its help text.
+**Problem:** When the clipboard is empty, Windows clipboard tools may output help text or error messages.
 
 **Solution:** Detect this and return empty string instead.
 
@@ -225,10 +248,16 @@ fi
 # Check if clipboard is empty
 check_clipboard_empty() {
     local output
-    output=$(win32yoink -o 2>/dev/null || echo "")
+    
+    # Try primary tool first
+    if command -v win32yank.exe >/dev/null 2>&1; then
+        output=$(win32yank.exe -o 2>/dev/null || echo "")
+    elif command -v win32yoink.exe >/dev/null 2>&1; then
+        output=$(win32yoink.exe -o 2>/dev/null || echo "")
+    fi
 
-    # Check if output is win32yoink help text
-    if [[ "$output" == "Usage:"* ]] || [[ "$output" == "win32yoink"* ]]; then
+    # Check if output is help text or error message
+    if [[ "$output" == "Usage:"* ]] || [[ "$output" == "win32yank"* ]] || [[ "$output" == "win32yoink"* ]]; then
         return 0  # Empty
     fi
 
@@ -278,13 +307,14 @@ EOF
 
 ## Complete Implementation
 
-Here's the complete shell script:
+Here's the complete shell script with multi-tool support:
 
 ```bash
 #!/bin/bash
 
-# Xclip wrapper for win32yoink.exe
+# Xclip wrapper for Windows clipboard tools
 # Provides xclip compatibility on Windows/WSL
+# Supports win32yank.exe (primary) and win32yoink.exe (fallback)
 
 # Default values
 INPUT=false
@@ -292,6 +322,23 @@ OUTPUT=false
 SELECTION="c"  # c = CLIPBOARD, p = PRIMARY
 TARGET="UTF8_STRING"
 QUIET=false
+
+# Tool detection and selection
+detect_clipboard_tool() {
+    # Try win32yank first (primary)
+    if command -v win32yank.exe >/dev/null 2>&1; then
+        echo "win32yank.exe"
+        return 0
+    fi
+    
+    # Fallback to win32yoink
+    if command -v win32yoink.exe >/dev/null 2>&1; then
+        echo "win32yoink.exe"
+        return 0
+    fi
+    
+    return 1
+}
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -322,7 +369,7 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         -version)
-            echo "xclip wrapper v1.0 (win32yoink backend)"
+            echo "xclip wrapper v2.0 (win32yank/win32yoink backend)"
             exit 0
             ;;
         -help)
@@ -348,6 +395,13 @@ fi
 
 if [[ $INPUT == true && $OUTPUT == true ]]; then
     echo "Error: Cannot specify both -i and -o" >&2
+    exit 1
+fi
+
+# Detect available clipboard tool
+CLIPBOARD_TOOL=$(detect_clipboard_tool)
+if [[ $? -ne 0 ]]; then
+    echo "Error: No compatible clipboard tool found (win32yank or win32yoink)" >&2
     exit 1
 fi
 
@@ -401,49 +455,70 @@ case "$SELECTION" in
         ;;
 esac
 
+# Execute clipboard operation with tool-specific handling
+execute_clipboard_operation() {
+    local tool="$1"
+    local operation="$2"  # "in" or "out"
+    
+    if [[ "$operation" == "in" ]]; then
+        # Copy to clipboard
+        if [[ "$tool" == "win32yank.exe" ]]; then
+            if ! win32yank.exe -i 2>/dev/null; then
+                return 1
+            fi
+        elif [[ "$tool" == "win32yoink.exe" ]]; then
+            if ! win32yoink.exe -i 2>/dev/null; then
+                return 1
+            fi
+        fi
+        
+    elif [[ "$operation" == "out" ]]; then
+        # Read from clipboard
+        local output=""
+        
+        if [[ "$tool" == "win32yank.exe" ]]; then
+            output=$(win32yank.exe -o 2>/dev/null || echo "")
+        elif [[ "$tool" == "win32yoink.exe" ]]; then
+            output=$(win32yoink.exe -o 2>/dev/null || echo "")
+        fi
+        
+        # Check if output is empty or contains tool help text
+        if [[ -z "$output" || "$output" == "Usage:"* || "$output" == "win32yank"* || "$output" == "win32yoink"* ]]; then
+            # Try fallback tools
+            if [[ "$tool" == "win32yank.exe" ]]; then
+                # Try win32yoink as fallback
+                if command -v win32yoink.exe >/dev/null 2>&1; then
+                    output=$(win32yoink.exe -o 2>/dev/null || echo "")
+                fi
+            fi
+        fi
+        
+        # Remove trailing newlines that some tools add
+        output=$(echo "$output" | sed 's/\r$//;s/\n$//')
+        
+        echo "$output"
+    fi
+}
+
 # Execute operation
 if [[ $INPUT == true ]]; then
-    # Copy to clipboard
-    # Read from stdin
-    local data
-    data=$(cat)
-
-    # Try win32yoink first
-    if echo "$data" | win32yoink -i 2>/dev/null; then
-        exit 0
+    # Copy to clipboard with fallback
+    if ! execute_clipboard_operation "$CLIPBOARD_TOOL" "in"; then
+        # Try fallback tools
+        if [[ "$CLIPBOARD_TOOL" == "win32yank.exe" && command -v win32yoink.exe >/dev/null 2>&1 ]]; then
+            if execute_clipboard_operation "win32yoink.exe" "in"; then
+                exit 0
+            fi
+        fi
+        
+        if [[ $QUIET == false ]]; then
+            echo "Error: Failed to copy to clipboard with all available tools" >&2
+        fi
+        exit 1
     fi
-
-    # Fallback to PowerShell
-    if echo "$data" | powershell -command "Set-Clipboard" 2>/dev/null; then
-        exit 0
-    fi
-
-    if [[ $QUIET == false ]]; then
-        echo "Error: Failed to copy to clipboard" >&2
-    fi
-    exit 1
 elif [[ $OUTPUT == true ]]; then
-    # Read from clipboard
-    local output
-
-    # Try win32yoink first
-    output=$(win32yoink -o 2>/dev/null || echo "")
-
-    # Check if output is win32yoink help text or empty
-    if [[ -n "$output" && "$output" != "Usage:"* && "$output" != "win32yoink"* ]]; then
-        # Valid output from win32yoink
-        echo "$output" | sed 's/\r$//;s/\n$//'
-        exit 0
-    fi
-
-    # Fallback to PowerShell
-    output=$(powershell -command "Get-Clipboard" 2>/dev/null || echo "")
-
-    # Remove trailing newlines
-    output=$(echo "$output" | sed 's/\r$//;s/\n$//')
-
-    echo "$output"
-    exit 0
+    # Read from clipboard with fallback
+    execute_clipboard_operation "$CLIPBOARD_TOOL" "out"
 fi
 ```
 
@@ -502,13 +577,25 @@ fi
    xclip -o
    ```
 
+7. **Tool fallback testing**
+   ```bash
+   # Test with win32yank available
+   echo "Test" | xclip -i
+   xclip -o
+   
+   # Test with only win32yoink available
+   # (remove win32yank from PATH temporarily)
+   echo "Test2" | xclip -i
+   xclip -o
+   ```
+
 ### Test Script
 
 ```bash
 #!/bin/bash
 
-echo "Testing xclip wrapper..."
-echo "========================"
+echo "Testing xclip wrapper with multi-tool support..."
+echo "================================================"
 
 # Test 1: Basic copy/paste
 echo -e "\nTest 1: Basic copy/paste"
@@ -561,7 +648,23 @@ else
     echo "✗ FAIL: Expected '$unicode', got '$result'"
 fi
 
-echo -e "\n========================"
+# Test 6: Multi-tool fallback (if both tools are available)
+echo -e "\nTest 6: Tool detection and fallback"
+if command -v win32yank.exe >/dev/null 2>&1; then
+    echo "✓ win32yank.exe detected (primary tool)"
+else
+    echo "- win32yank.exe not found"
+fi
+
+if command -v win32yoink.exe >/dev/null 2>&1; then
+    echo "✓ win32yoink.exe detected (fallback tool)"
+else
+    echo "- win32yoink.exe not found"
+fi
+
+
+
+echo -e "\n================================================"
 echo "Testing complete!"
 ```
 
@@ -619,9 +722,9 @@ print("All pyperclip tests passed!")
 
 ### Common Error Scenarios
 
-1. **win32yoink not found**
-   - Try fallback to PowerShell
-   - If PowerShell also fails, show clear error message
+1. **No compatible clipboard tool found**
+   - Check for win32yank.exe and win32yoink.exe
+   - Show clear error message with installation instructions
 
 2. **Clipboard permission denied**
    - Show user-friendly error message
@@ -633,13 +736,19 @@ print("All pyperclip tests passed!")
 4. **Empty clipboard**
    - Return empty string (not help text)
 
+5. **Tool-specific failures**
+   - Fallback to alternative tools with clear error reporting
+
 ### Error Messages
 
 ```bash
-# Error: win32yoink not found
-if ! command -v win32yoink >/dev/null 2>&1 && ! command -v powershell >/dev/null 2>&1; then
-    echo "Error: Neither win32yoink nor PowerShell found" >&2
-    echo "Please install win32yoink or ensure PowerShell is available" >&2
+# Error: No compatible clipboard tool found
+if ! command -v win32yank.exe >/dev/null 2>&1 && ! command -v win32yoink.exe >/dev/null 2>&1; then
+    echo "Error: No compatible clipboard tool found" >&2
+    echo "Please install win32yank.exe or win32yoink.exe" >&2
+    echo "Installation options:" >&2
+    echo "  - win32yank: https://github.com/equalsraf/win32yank" >&2
+    echo "  - win32yoink: https://github.com/equalsraf/win32yoink" >&2
     exit 1
 fi
 
@@ -649,76 +758,11 @@ if [[ $? -eq 13 ]]; then
     echo "Try running as administrator or check clipboard permissions" >&2
     exit 1
 fi
+
+# Error: All tools failed
+if [[ $QUIET == false ]]; then
+    echo "Error: Failed to copy to clipboard with all available tools" >&2
+    echo "Tried: win32yank.exe, win32yoink.exe" >&2
+    exit 1
+fi
 ```
-
-## Performance Considerations
-
-1. **Minimize shell overhead**
-   - Use direct command execution where possible
-   - Avoid unnecessary variable assignments
-
-2. **Fallback strategy**
-   - Try win32yoink first (faster)
-   - Fallback to PowerShell only if needed
-
-3. **Caching**
-   - Could cache clipboard contents for repeated accesses
-   - Not implemented in this version to keep it simple
-
-## Future Enhancements
-
-1. **Additional clipboard formats**
-   - Support for images, files, and other MIME types
-   - HTML clipboard format
-   - Rich text format
-
-2. **Clipboard monitoring**
-   - Watch for clipboard changes
-   - Notify when clipboard content changes
-
-3. **Clipboard history**
-   - Maintain history of clipboard contents
-   - Allow cycling through previous clipboard contents
-
-4. **Security features**
-   - Clipboard encryption for sensitive data
-   - Clipboard access notifications
-   - Clipboard audit logging
-
-5. **Advanced features**
-   - Clipboard synchronization across devices
-   - Clipboard sharing between VMs and host
-   - Clipboard access from remote sessions
-
-## Migration from win32yoink
-
-### For Existing Users
-
-1. **No changes needed**
-   - The wrapper passes through all arguments to win32yoink
-   - Existing scripts will continue to work
-
-2. **New features available**
-   - `-selection` flag now works
-   - Better error handling
-   - Fallback to PowerShell
-
-3. **Performance**
-   - Minimal overhead (just argument parsing)
-   - Fast execution
-
-### For Developers
-
-1. **Pyperclip compatibility**
-   - Pyperclip will now work correctly
-   - No code changes needed
-
-2. **Other tools**
-   - Any tool expecting xclip will work
-   - Full xclip command-line interface support
-
-## Conclusion
-
-This shell wrapper provides a simple, effective solution for making win32yoink compatible with xclip. By handling the `-selection` flag and other xclip features that win32yoink doesn't support, it enables tools like pyperclip to work correctly on Windows/WSL systems.
-
-The wrapper is easy to deploy, has minimal overhead, and provides robust error handling. It can be extended in the future to support additional features as needed.
