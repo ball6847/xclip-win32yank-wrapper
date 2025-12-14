@@ -136,10 +136,6 @@ xclip -version
 
 ## Testing
 
-### Continuous Integration
-
-Tests are automatically run on every push and pull request to the main branch using GitHub Actions. The workflow tests against Python 3.12 to ensure compatibility.
-
 ### Test Files
 
 **`tests/test_pyperclip_compatibility.py`**
@@ -152,6 +148,11 @@ Tests are automatically run on every push and pull request to the main branch us
 - Tests direct xclip wrapper functionality
 - All test cases defined in tables
 - Comprehensive error handling tests
+
+**`tests/mock_clipboard_tools.py`**
+- Mock implementations of win32yank.exe and win32yoink.exe
+- For testing on non-Windows platforms
+- Simulates clipboard functionality
 
 ### Run All Tests
 
@@ -171,6 +172,16 @@ pytest tests/test_xclip_wrapper.py::test_clipboard_operations -v
 # Run with detailed output
 pytest -vv
 ```
+
+### Testing Limitations
+
+**Important**: This project requires Windows-specific clipboard tools (`win32yank.exe` or `win32yoink.exe`) that are only available on Windows/WSL systems. 
+
+- Tests will only work on Windows or WSL where the clipboard tools are installed
+- GitHub Actions cannot run these tests on Ubuntu runners
+- For testing on other platforms, use the mock tools in `tests/mock_clipboard_tools.py`
+
+See [AGENTS.md](AGENTS.md) for detailed testing strategies and workarounds.
 
 ## Error Handling
 

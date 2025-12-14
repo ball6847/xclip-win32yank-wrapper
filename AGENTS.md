@@ -95,6 +95,111 @@
 **Cons:**
 - Requires pytest installation (`pip install pytest`)
 - Slightly more complex setup
+- Requires Windows clipboard tools (win32yank.exe or win32yoink.exe)
+
+### Testing Limitations
+
+#### Platform-Specific Constraints
+
+This project is designed for **Windows/WSL environments** and requires Windows-specific clipboard utilities:
+- `win32yank.exe` (primary)
+- `win32yoink.exe` (fallback)
+
+**These tools are NOT available on Linux/macOS or GitHub Actions Ubuntu runners**, which creates testing challenges:
+
+1. **GitHub Actions Limitation**: The project previously had a GitHub Actions workflow (`.github/workflows/test.yml`) that has been removed because:
+   - Ubuntu runners cannot run Windows executables
+   - Mocking Windows clipboard functionality is complex and unreliable
+   - Tests would pass on Ubuntu but fail on actual Windows/WSL systems
+
+2. **Local Testing Requirements**: To run tests locally, you must:
+   - Be on a Windows system or WSL
+   - Have `win32yank.exe` or `win32yoink.exe` installed and in PATH
+   - Have the xclip wrapper script executable
+
+#### Testing Strategies
+
+**For Development and Local Testing:**
+
+1. **Manual Testing** (Recommended for quick checks):
+   ```bash
+   # Make xclip executable
+   chmod +x xclip
+   
+   # Test basic copy/paste
+   echo "Hello World" | ./xclip -i
+   ./xclip -o
+   
+   # Test with selection
+   echo "Test" | ./xclip -selection c -i
+   ./xclip -selection p -o
+   
+   # Test help
+   ./xclip -help
+   ```
+
+2. **Pyperclip Integration Testing** (Recommended for comprehensive testing):
+   ```bash
+   # Install dependencies
+   pip install pyperclip pytest
+   
+   # Run tests
+   pytest tests/test_pyperclip_compatibility.py -v
+   ```
+
+3. **Unit Testing** (For shell script logic without clipboard):
+   ```bash
+   # Test argument parsing and error handling
+   ./xclip -help
+   ./xclip -version
+   ./xclip  # Should show error about missing -i or -o
+   ```
+
+**For CI/CD Pipelines:**
+
+Since GitHub Actions cannot test the actual clipboard functionality, consider:
+
+1. **Skip Clipboard Tests**: Modify tests to skip when clipboard tools are unavailable
+2. **Windows-Specific CI**: Use Windows runners (more complex, requires setup)
+3. **Mock-Based Testing**: Use the provided mock tools for basic functionality testing
+
+**Mock Tools Available**:
+
+The project includes `tests/mock_clipboard_tools.py` which provides mock implementations of `win32yank.exe` and `win32yoink.exe` for testing purposes. These can be used to test the shell script logic without requiring actual Windows clipboard tools.
+
+**Example using mocks:**
+```python
+from tests.mock_clipboard_tools import setup_mock_clipboard, clear_mock_clipboard
+
+# Setup mock clipboard tools
+setup_mock_clipboard()
+
+# Now xclip wrapper can be tested without actual Windows tools
+# ... run tests ...
+
+# Cleanup
+clear_mock_clipboard()
+```
+
+#### Best Practices for Testing
+
+1. **Test on Actual Target Platform**: Always test on Windows/WSL where the tools will actually run
+2. **Test Edge Cases**: Empty clipboard, special characters, Unicode, multi-line text
+3. **Test Error Conditions**: Missing tools, invalid arguments, permission issues
+4. **Test Both Tools**: If both win32yank and win32yoink are available, test fallback behavior
+5. **Test pyperclip Integration**: The most common use case is through pyperclip
+
+#### Known Testing Issues
+
+1. **Empty Clipboard Detection**: Some clipboard tools return help text when clipboard is empty
+2. **Trailing Newlines**: Different tools may add/remove newlines differently
+3. **Unicode Handling**: Ensure UTF-8 is properly handled across all tools
+4. **Fallback Behavior**: When primary tool fails, fallback should work seamlessly
+
+**Workarounds:**
+- The xclip wrapper includes logic to detect and filter help text
+- Trailing newlines are stripped in the wrapper
+- Unicode is handled via UTF-8 encoding
 
 ### Testing Approach Comparison
 
