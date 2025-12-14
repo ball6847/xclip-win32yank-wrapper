@@ -9,13 +9,21 @@ This project solves the problem of Windows clipboard utilities lacking support f
 ## Features
 
 ✅ **100% xclip compatibility** - Supports all xclip command-line options
+
 ✅ **Multi-tool support** - Works with win32yank.exe and win32yoink.exe
+
 ✅ **Selection handling** - Maps X11 selections (CLIPBOARD/PRIMARY) to Windows clipboard
+
 ✅ **Robust error handling** - Clear error messages with installation instructions
+
 ✅ **Pyperclip compatible** - Works seamlessly with the pyperclip library
+
 ✅ **Unicode support** - Proper handling of UTF-8 characters and emojis
+
 ✅ **Multi-line text** - Correct processing of newlines
+
 ✅ **Empty clipboard handling** - Returns empty string instead of help text
+
 ✅ **Fallback mechanisms** - Graceful degradation when tools fail
 
 ## Installation
@@ -357,4 +365,3 @@ This project is maintained by **ball6847**. For bug reports and feature requests
 ✅ Selection flag handling
 
 All implementation tasks have been completed successfully!
-
