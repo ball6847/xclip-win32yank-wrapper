@@ -53,33 +53,7 @@ cp xclip ~/.local/bin/
 
 ### Testing Strategy
 
-The project includes comprehensive test cases in the design document:
-
-1. **Basic copy/paste operations**
-2. **Selection flag handling** (`-selection c/p`)
-3. **Empty clipboard behavior**
-4. **Special characters and Unicode support**
-5. **Multi-line text handling**
-6. **Tool fallback mechanisms**
-
-### Test Execution
-
-```bash
-# Run the test script (when implemented)
-./test_xclip_wrapper.sh
-
-# Manual testing examples
-echo "Hello World" | xclip -i
-xclip -o
-
-# Pyperclip compatibility test
-python3 -c "
-import pyperclip
-pyperclip.set_clipboard('xclip')
-pyperclip.copy('Test from pyperclip')
-print(pyperclip.paste())
-"
-```
+The project includes comprehensive test cases in the design document.
 
 ## Code Style Guidelines
 
@@ -172,39 +146,6 @@ print(pyperclip.paste())
 # Alternative: Install win32yoink
 # Download from: https://github.com/equalsraf/win32yoink
 ```
-
-## Future Enhancements
-
-1. **Performance Optimization**
-   - Cache tool detection results
-   - Optimize fallback chains
-   - Benchmark different tool combinations
-
-2. **Additional Features**
-   - Support for more xclip options
-   - Clipboard format detection
-   - Image clipboard support (if feasible)
-
-3. **Platform Expansion**
-   - Native macOS support
-   - Additional Windows clipboard tools
-   - WSL-specific optimizations
-
-## Common Issues and Solutions
-
-1. **Tool not found**
-   - Install win32yank or win32yoink
-   - Add tool directory to PATH
-
-2. **Permission denied**
-   - Run as administrator if needed
-   - Check clipboard permissions
-   - Verify tool execution permissions
-
-3. **Encoding issues**
-   - Ensure UTF-8 support
-   - Check system locale settings
-   - Validate tool Unicode handling
 
 ## Contributing Guidelines
 
