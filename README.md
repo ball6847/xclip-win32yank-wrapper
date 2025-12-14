@@ -138,7 +138,7 @@ xclip -version
 
 ### Continuous Integration
 
-Tests are automatically run on every push and pull request to the main branch using GitHub Actions. The workflow tests against multiple Python versions (3.8-3.12) to ensure compatibility.
+Tests are automatically run on every push and pull request to the main branch using GitHub Actions. The workflow tests against Python 3.12 to ensure compatibility.
 
 ### Test Files
 

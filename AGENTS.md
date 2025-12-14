@@ -207,7 +207,7 @@ If a test fails:
 
 ### Continuous Integration
 
-The project includes a GitHub Actions workflow that automatically runs tests on every push and pull request to the main branch. The workflow tests against multiple Python versions (3.8-3.12) to ensure compatibility.
+The project includes a GitHub Actions workflow that automatically runs tests on every push and pull request to the main branch. The workflow tests against Python 3.12 to ensure compatibility.
 
 **Workflow File:** `.github/workflows/test.yml`
 
