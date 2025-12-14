@@ -38,6 +38,18 @@ The wrapper consists of five main components:
 
 ## Development Workflow
 
+### Project Tracking
+
+**IMPORTANT: Always follow this workflow:**
+
+1. **Read PLAN.md first** - Check the current state of all tasks
+2. **Create/update todo list** - Based on what needs to be done in PLAN.md
+3. **Implement tasks** - Work on the highest priority items
+4. **Update PLAN.md** - When a task is completed, mark it as done in PLAN.md
+5. **Update todo list** - Reflect the updated state from PLAN.md
+
+**PLAN.md is the source of truth** - Always update it when tasks are completed.
+
 ### Build Process
 
 This is a shell script project with no compilation required:
